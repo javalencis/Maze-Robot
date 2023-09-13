@@ -14,11 +14,19 @@
 #define tLeft A1
 #define eLeft A0
 
-uint8_t maxLimitFront = 9;
+#define TURN_SPEED 100   // Velocidad de giro
+#define FORWARD_SPEED 150 // Velocidad de avance
+#define WALL_DISTANCE 20  // Distancia objetivo para seguir la pared
+
+
+uint8_t maxLimitFront = 15;
 
 uint16_t leftSensor, oldLeftSensor = 0;
 uint16_t rightSensor, oldRightSensor = 0;
 uint16_t centerSensor, oldCenterSensor = 0;
+
+
+bool isFront = true;
 
 void setup() {
   Serial.begin(9600);
@@ -28,18 +36,59 @@ void setup() {
 
 void loop() {
   readSensors();
+   // Verifica si hay un obstáculo en el frente
   if (centerSensor < maxLimitFront) {
+    // Detiene el carro
     stop();
+
+    // Verifica si hay espacio a la derecha para girar
+    if (rightSensor > WALL_DISTANCE) {
+      // Gira hacia la derecha
+      turnRight();
+    } else {
+      // Si no hay espacio a la derecha, gira a la izquierda
+      turnLeft();
+    }
   } else {
-    run();
+    // Si no hay obstáculos en el frente, sigue la pared
+    followWall();
   }
 }
 
 
+
+
+void followWall() {
+  // Ajusta la velocidad de los motores para seguir la pared
+  run();
+
+  // Calcula la diferencia entre la distancia actual y la distancia objetivo
+  int error = centerSensor - WALL_DISTANCE;
+
+  // Ajusta la velocidad de los motores para corregir el error
+  int leftSpeed = FORWARD_SPEED - error;
+  int rightSpeed = FORWARD_SPEED + error;
+
+  // Aplica las velocidades ajustadas a los motores
+  analogWrite(enA, leftSpeed + offsetEnA);
+  analogWrite(enB, rightSpeed);
+}
+
+void turnLeft() {
+  // Realiza una maniobra de giro a la izquierda
+  analogWrite(enA, TURN_SPEED + offsetEnA);
+  analogWrite(enB, TURN_SPEED);
+  digitalWrite(rm1, 1);
+  digitalWrite(rm2, 0);
+  digitalWrite(lm1, 0);
+  digitalWrite(lm2, 1);
+}
+
+
+
 void speed(int vel) {
+  analogWrite(enA, vel+offsetEnA);
   analogWrite(enB, vel);
-  digitalWrite(lm1, 1);
-  digitalWrite(lm2, 0);
 }
 
 void initPins() {
@@ -81,6 +130,9 @@ void readSensors() {
   oldLeftSensor = leftSensor;
   oldRightSensor = rightSensor;
   oldCenterSensor = centerSensor;
+
+  
+
 }
 
 
@@ -97,5 +149,14 @@ void stop() {
   digitalWrite(rm1, 0);
   digitalWrite(rm2, 0);
   digitalWrite(lm1, 0);
+  digitalWrite(lm2, 0);
+}
+
+void turnRight() {
+  analogWrite(enA, 100 + offsetEnA);
+  analogWrite(enB, 100);
+  digitalWrite(rm1, 0);
+  digitalWrite(rm2, 1);
+  digitalWrite(lm1, 1);
   digitalWrite(lm2, 0);
 }
