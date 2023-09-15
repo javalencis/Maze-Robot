@@ -1,5 +1,5 @@
-#define enB 9
-#define enA 10
+#define enB 9   //<Motor Izquierda
+#define enA 10  //<Motor Derecha
 
 #define lm1 5
 #define lm2 4
@@ -7,6 +7,7 @@
 #define rm2 6
 #define offsetEnA 12
 
+#define FORWARD_SPEED 200
 #define tCenter A3
 #define eCenter A2
 #define tRight A5
@@ -14,7 +15,8 @@
 #define tLeft A1
 #define eLeft A0
 
-uint8_t maxLimitFront = 15;
+
+uint8_t maxLimitFront = 20;
 
 uint16_t leftSensor, oldLeftSensor = 0;
 uint16_t rightSensor, oldRightSensor = 0;
@@ -32,47 +34,42 @@ void setup() {
 void loop() {
   readSensors();
 
-  //Verifica condicion de parada. 
+  //Verifica condicion de parada.
   if (centerSensor < maxLimitFront) {
     stop();
-    
     //Bandera que permite activar la funcion de doblar hacia la derecha
-    if(rightSensor > 20){
+    if (rightSensor > 20) {
       bturnRight = true;
     }
 
-   //Bandear que me permite activar la funcion de doblar hacia la izquierda.
-    if(leftSensor > 20){
+    //Bandear que me permite activar la funcion de doblar hacia la izquierda.
+    if (leftSensor > 20) {
       bturnLeft = true;
     }
- 
-  
-  } 
+  }
 
   //Si el sensor central detecta una distancia mayor a la limite, seguirá hacia adelante
-  if(centerSensor > maxLimitFront){
+  if (centerSensor > maxLimitFront) {
     run();
+    followWall();
   }
 
   // Si la bandera esta en true, permite doblar hacia la derecha
-  if(bturnRight){
+  if (bturnRight) {
     fTurnRight();
     bturnRight = false;
-    
   }
   //Si la bandera esta en true, permite doblar hacia la izquierda.
-  if(bturnLeft){
+  if (bturnLeft) {
     fTurnLeft();
     bturnLeft = false;
   }
-
 }
 
 
 void speed(int vel) {
+  analogWrite(enA, vel + offsetEnA);
   analogWrite(enB, vel);
-  digitalWrite(lm1, 1);
-  digitalWrite(lm2, 0);
 }
 
 void initPins() {
@@ -106,10 +103,15 @@ void readSensors() {
   uint16_t rSensor = readSensor(tRight, eRight);
   uint16_t cSensor = readSensor(tCenter, eCenter);
 
-  leftSensor = (lSensor + oldLeftSensor) / 2;
-  rightSensor = (rSensor + oldRightSensor) / 2;
-  centerSensor = (cSensor + oldCenterSensor) / 2;
-
+  leftSensor = ((lSensor > 700 ? 0 : lSensor) + oldLeftSensor) / 2;
+  rightSensor = ((rSensor > 700 ? 0 : rSensor) + oldRightSensor) / 2;
+  centerSensor = ((cSensor > 700 ? 0 : cSensor) + oldCenterSensor) / 2;
+  // Serial.print("left: ");
+  //Serial.print(leftSensor);
+  //Serial.print(" right: ");
+  //Serial.print(rightSensor);
+  //Serial.print(" center: ");
+  //Serial.println(centerSensor);
 
   oldLeftSensor = leftSensor;
   oldRightSensor = rightSensor;
@@ -117,42 +119,56 @@ void readSensors() {
 }
 
 //funcion que me permite doblar hacia la derecha
-void fTurnRight(){
+void fTurnRight() {
   //Controlar por medio del sensor del centro hasta cuando doblar hacia la derecha
-  analogWrite(enA, 200 + offsetEnA);
-  analogWrite(enB, 200);
+  analogWrite(enA, 90 + offsetEnA);
+  analogWrite(enB, 90);
 
-  if(centerSensor < maxLimitFront){
-    digitalWrite(rm1, 0);
-    digitalWrite(rm2, 1);
-    digitalWrite(lm1, 1);
-    digitalWrite(lm2, 0);
-
-    //readSensors();
-  }
-
+  digitalWrite(rm1, 0);
+  digitalWrite(rm2, 1);
+  digitalWrite(lm1, 1);
+  digitalWrite(lm2, 0);
 }
 
-void fTurnLeft(){
+
+void fTurnLeft() {
   //Controlar por medio del sensor del centro hasta cuando doblar hacia la derecha
-  analogWrite(enA, 200 + offsetEnA);
-  analogWrite(enB, 200);
+  analogWrite(enA, 90 + offsetEnA);
+  analogWrite(enB, 90);
 
-  if(centerSensor < maxLimitFront){
-    digitalWrite(rm1, 1);
-    digitalWrite(rm2, 0);
-    digitalWrite(lm1, 0);
-    digitalWrite(lm2, 1);
-
-    //readSensors();
-  }
-
+  digitalWrite(rm1, 1);
+  digitalWrite(rm2, 0);
+  digitalWrite(lm1, 0);
+  digitalWrite(lm2, 1);
 }
+void followWall() {
+
+
+  int error = (leftSensor - rightSensor);
+
+  int leftSpeed = FORWARD_SPEED;
+  int rightSpeed = FORWARD_SPEED;
+  if (error >= 0) {
+
+    leftSpeed = FORWARD_SPEED - error * 5;
+
+  } else {
+
+    rightSpeed = FORWARD_SPEED + error * 5;
+  }
+  Serial.print("left: ");
+  Serial.print(leftSpeed);
+  Serial.print(" right: ");
+  Serial.println(rightSpeed);
+
+
+  analogWrite(enA, rightSpeed + offsetEnA);
+  analogWrite(enB, leftSpeed);
+}
+
 
 
 void run() {
-  analogWrite(enA, 150 + offsetEnA);
-  analogWrite(enB, 150);
   digitalWrite(rm1, 1);
   digitalWrite(rm2, 0);
   digitalWrite(lm1, 1);
