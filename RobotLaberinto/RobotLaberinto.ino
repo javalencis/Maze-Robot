@@ -7,16 +7,16 @@
 #define rm2 6
 #define offsetEnA 12
 
-#define FORWARD_SPEED 200
+#define FORWARD_SPEED 180
 #define tCenter A3
 #define eCenter A2
-#define tRight A5
-#define eRight A4
-#define tLeft A1
-#define eLeft A0
+#define tRight A0
+#define eRight A1
+#define tLeft A4
+#define eLeft A5
 
 
-uint8_t maxLimitFront = 20;
+uint8_t maxLimitFront = 25  ;
 
 uint16_t leftSensor, oldLeftSensor = 0;
 uint16_t rightSensor, oldRightSensor = 0;
@@ -76,12 +76,12 @@ void initPins() {
   for (int i = 4; i <= 10; i++) {
     pinMode(i, OUTPUT);
   }
-  pinMode(A0, INPUT);
-  pinMode(A1, OUTPUT);
+  pinMode(A0, OUTPUT);
+  pinMode(A1, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, OUTPUT);
-  pinMode(A4, INPUT);
-  pinMode(A5, OUTPUT);
+  pinMode(A4, OUTPUT);
+  pinMode(A5, INPUT);
 }
 
 
@@ -106,12 +106,12 @@ void readSensors() {
   leftSensor = ((lSensor > 700 ? 0 : lSensor) + oldLeftSensor) / 2;
   rightSensor = ((rSensor > 700 ? 0 : rSensor) + oldRightSensor) / 2;
   centerSensor = ((cSensor > 700 ? 0 : cSensor) + oldCenterSensor) / 2;
-  // Serial.print("left: ");
-  //Serial.print(leftSensor);
-  //Serial.print(" right: ");
-  //Serial.print(rightSensor);
-  //Serial.print(" center: ");
-  //Serial.println(centerSensor);
+  Serial.print("left: ");
+  Serial.print(leftSensor);
+  Serial.print(" right: ");
+  Serial.print(rightSensor);
+  Serial.print(" center: ");
+  Serial.println(centerSensor);
 
   oldLeftSensor = leftSensor;
   oldRightSensor = rightSensor;
@@ -121,8 +121,8 @@ void readSensors() {
 //funcion que me permite doblar hacia la derecha
 void fTurnRight() {
   //Controlar por medio del sensor del centro hasta cuando doblar hacia la derecha
-  analogWrite(enA, 90 + offsetEnA);
-  analogWrite(enB, 90);
+  analogWrite(enA, 80 + offsetEnA );
+  analogWrite(enB, 80);
 
   digitalWrite(rm1, 0);
   digitalWrite(rm2, 1);
@@ -133,8 +133,8 @@ void fTurnRight() {
 
 void fTurnLeft() {
   //Controlar por medio del sensor del centro hasta cuando doblar hacia la derecha
-  analogWrite(enA, 90 + offsetEnA);
-  analogWrite(enB, 90);
+  analogWrite(enA, 80 + offsetEnA);
+  analogWrite(enB, 80);
 
   digitalWrite(rm1, 1);
   digitalWrite(rm2, 0);
@@ -156,10 +156,10 @@ void followWall() {
 
     rightSpeed = FORWARD_SPEED + error * 5;
   }
-  Serial.print("left: ");
-  Serial.print(leftSpeed);
-  Serial.print(" right: ");
-  Serial.println(rightSpeed);
+  // Serial.print("left: ");
+  // Serial.print(leftSpeed);
+  // Serial.print(" right: ");
+  // Serial.println(rightSpeed);
 
 
   analogWrite(enA, rightSpeed + offsetEnA);
