@@ -7,16 +7,20 @@
 #define rm2 6
 #define offsetEnA 12
 
-#define FORWARD_SPEED 200
+#define FORWARD_SPEED 120
 #define tCenter A3
 #define eCenter A2
-#define tRight A5
-#define eRight A4
-#define tLeft A1
-#define eLeft A0
+#define tRight A0
+#define eRight A1
+#define tLeft A4
+#define eLeft A5
 
-
+uint8_t contTurns = 0;
+bool turnR = false;
+bool turnL = false;
+bool banFront = false;
 uint8_t maxLimitFront = 15  ;
+
 
 uint16_t leftSensor, oldLeftSensor = 0;
 uint16_t rightSensor, oldRightSensor = 0;
@@ -33,36 +37,62 @@ void setup() {
 
 void loop() {
   readSensors();
-
+  if(contTurns == 0){
+    turnL = true;
+  }else if(contTurns ==1){
+    turnR = true;
+    turnL =false;
+  }else if(contTurns == 2){
+    turnL = true;
+    turnR =false;
+  }else if(contTurns == 3){
+    maxLimitFront = 45;
+  }else if(contTurns == 4){
+    turnR = true;
+    turnL =false;
+  }
+  else if(contTurns == 5){
+    maxLimitFront = 15;
+    turnR = true;
+    turnL =true;
+  }
+  Serial.println(contTurns);
   //Verifica condicion de parada.
-  if (centerSensor < maxLimitFront) {
+  if ((centerSensor < maxLimitFront) && banFront) {
     stop();
     //Bandera que permite activar la funcion de doblar hacia la derecha
-    if (rightSensor > 20) {
+    if ((rightSensor > 20) &&  turnR) {
       bturnRight = true;
     }
 
     //Bandear que me permite activar la funcion de doblar hacia la izquierda.
-    if (leftSensor > 20) {
+    if ((leftSensor > 20) &&  turnL) {
       bturnLeft = true;
     }
+    banFront = false;
+    contTurns++;
+  
   }
 
   //Si el sensor central detecta una distancia mayor a la limite, seguirá hacia adelante
   if (centerSensor > maxLimitFront) {
     run();
     followWall();
+    banFront = true;
   }
 
   // Si la bandera esta en true, permite doblar hacia la derecha
   if (bturnRight) {
     fTurnRight();
     bturnRight = false;
+
+
   }
   //Si la bandera esta en true, permite doblar hacia la izquierda.
   if (bturnLeft) {
     fTurnLeft();
     bturnLeft = false;
+
   }
 }
 
@@ -76,12 +106,12 @@ void initPins() {
   for (int i = 4; i <= 10; i++) {
     pinMode(i, OUTPUT);
   }
-  pinMode(A0, INPUT);
-  pinMode(A1, OUTPUT);
+  pinMode(A0, OUTPUT);
+  pinMode(A1, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, OUTPUT);
-  pinMode(A4, INPUT);
-  pinMode(A5, OUTPUT);
+  pinMode(A4, OUTPUT);
+  pinMode(A5, INPUT);
 }
 
 
@@ -106,12 +136,12 @@ void readSensors() {
   leftSensor = ((lSensor > 700 ? 0 : lSensor) + oldLeftSensor) / 2;
   rightSensor = ((rSensor > 700 ? 0 : rSensor) + oldRightSensor) / 2;
   centerSensor = ((cSensor > 700 ? 0 : cSensor) + oldCenterSensor) / 2;
-  Serial.print("left: ");
+/*  Serial.print("left: ");
   Serial.print(leftSensor);
   Serial.print(" right: ");
   Serial.print(rightSensor);
   Serial.print(" center: ");
-  Serial.println(centerSensor);
+  Serial.println(centerSensor);*/
 
   oldLeftSensor = leftSensor;
   oldRightSensor = rightSensor;
@@ -121,7 +151,9 @@ void readSensors() {
 //funcion que me permite doblar hacia la derecha
 void fTurnRight() {
   //Controlar por medio del sensor del centro hasta cuando doblar hacia la derecha
+
   analogWrite(enA, 80 + offsetEnA);
+
   analogWrite(enB, 80);
 
   digitalWrite(rm1, 0);
@@ -156,6 +188,11 @@ void followWall() {
 
     rightSpeed = FORWARD_SPEED + error * 5;
   }
+
+  // Serial.print("left: ");
+  // Serial.print(leftSpeed);
+  // Serial.print(" right: ");
+  // Serial.println(rightSpeed);
 
 
 
