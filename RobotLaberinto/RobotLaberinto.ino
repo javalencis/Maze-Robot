@@ -75,7 +75,7 @@ void loop() {
   }
 
   //Si el sensor central detecta una distancia mayor a la limite, seguirá hacia adelante
-  if (centerSensor > maxLimitFront) {
+  if (centerSensor > 33) {
     run();
     followWall();
     banFront = true;
@@ -84,6 +84,7 @@ void loop() {
   // Si la bandera esta en true, permite doblar hacia la derecha
   if (bturnRight) {
     fTurnRight();
+    delay(320);
     bturnRight = false;
 
 
@@ -91,6 +92,7 @@ void loop() {
   //Si la bandera esta en true, permite doblar hacia la izquierda.
   if (bturnLeft) {
     fTurnLeft();
+    delay(320);
     bturnLeft = false;
 
   }
